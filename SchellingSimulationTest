@@ -1,0 +1,302 @@
+import student.micro.*;
+import static org.assertj.core.api.Assertions.*;
+import student.media.*;
+import student.util.Random;
+import java.awt.Color;
+
+/**
+ *  Test each method thoroughly to ensure there are no bugs 
+ *  and the solution covers the entire problem.
+ *
+ *  @author Prakhar Pandey (prakhar28)
+ *  @version (2023.02.28)
+ */
+public class SchellingSimulationTest
+    extends TestCase
+{
+    private SchellingSimulation sim;
+    
+    /**
+     * Creates a new SchellingSimulationTest test object.
+     */
+    public SchellingSimulationTest()
+    {
+        // The constructor is usually empty in unit tests, since it runs
+        // once for the whole class, not once for each test method.
+        // Per-test initialization should be placed in setUp() instead.
+    }
+
+    /**
+     * Sets up the test fixture.
+     * Called before every test case method.
+     */
+    public void setUp()
+    {
+        /*# Insert your own setup code here */
+        sim = new SchellingSimulation(10, 10);
+        double satisfactionThreshold = 0.3;
+        int redLine = 0;
+    }
+
+    /**
+     * tests the setSatisfactionThreshold() method
+     */
+    public void testSetSatisfactionThreshold()
+    {
+        sim.setSatisfactionThreshold(0.5);
+        
+        assertThat(sim.getSatisfactionThreshold()).isEqualTo(0.5);
+    }
+    
+    /**
+     * tests the getSatisfactionThreshold() method
+     */
+    public void testGetSatisfactionThreshold()
+    {
+        sim.getSatisfactionThreshold();
+        
+        assertThat(sim.getSatisfactionThreshold()).isEqualTo(0.3);
+    }
+    
+    /**
+     * tests the setRedLine() method
+     */
+    public void testSetRedLine()
+    {
+        sim.setRedLine(1);
+        
+        assertThat(sim.getRedLine()).isEqualTo(1);
+    }
+    
+    /**
+     * tests the getRedLine() method
+     */
+    public void testGetRedLine()
+    {
+        sim.getRedLine();
+        
+        assertThat(sim.getRedLine()).isEqualTo(0);
+    }
+    
+    /**
+     * tests the populate() method
+     */
+    public void testPopulate()
+    {
+        for (Pixel pixel : sim.getPixels())
+        {
+            pixel.setColor(Color.GREEN);
+        }
+        
+        sim.setRedLine(1);
+        Random.setNextDoubles(0.1, 0.8, 0.6);
+        sim.populate(0.6, 0.2);
+        
+        assertThat(sim.getPixel(2, 3).getColor()).isNotEqualTo(Color.GREEN);
+    }
+    
+    /**
+     * tests the areSameColor() method
+     */
+    public void testAreSameColor()
+    {
+        for (Pixel pixel : sim.getPixels())
+        {
+            pixel.setColor(Color.GREEN);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        Pixel p2 = sim.getPixel(1, 2);
+        
+        assertThat(sim.areSameColor(p1, p2)).isTrue();
+    }
+    
+    /**
+     * tests the areSameColor() method
+     */
+    public void testAreSameColorWithOneRedPixel()
+    {
+        for (Pixel pixel : sim.getPixels())
+        {
+            pixel.setColor(Color.GREEN);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        Pixel p2 = sim.getPixel(1, 2);
+        p1.setColor(Color.RED);
+        
+        assertThat(sim.areSameColor(p1, p2)).isFalse();
+    }
+    
+    /**
+     * tests the isEmpty() method
+     */
+    public void testIsEmpty() 
+    {
+        Pixel p1 = sim.getPixel(1, 1);
+        p1.setColor(Color.WHITE);
+        
+        assertThat(sim.isEmpty(p1)).isTrue();
+    }
+    
+    /**
+     * tests the isEmpty() method
+     */
+    public void testIsEmptyWithGreenPixel() 
+    {
+        Pixel p1 = sim.getPixel(1, 1);
+        p1.setColor(Color.GREEN);
+        
+        assertThat(sim.isEmpty(p1)).isFalse();
+    }
+    
+    /**
+     * tests the isSatisfied() method
+     */
+    public void testIsSatisfied()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.BLUE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+
+        assertThat(sim.isSatisfied(p1, Color.ORANGE)).isFalse();
+        assertThat(sim.isSatisfied(p1, Color.BLUE)).isTrue();
+    }
+    
+    /**
+     * tests the MaybeRelocate() method
+     */
+    public void testMaybeRelocate()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.BLUE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        boolean result = sim.maybeRelocate(p1);
+        Random.setNextInts(2, 2);
+        
+        assertThat(result).isFalse();
+    }
+    
+    /**
+     * tests the MaybeRelocate() method
+     */
+    public void testMaybeRelocateWithWhitePixels()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.WHITE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        boolean result = sim.maybeRelocate(p1);
+        Random.setNextInts(2, 2);
+        
+        assertThat(result).isTrue();
+        assertThat(p1.getColor()).isEqualTo(Color.WHITE);
+    }
+    
+    /**
+     * tests the MaybeRelocate() method
+     */
+    public void testMaybeRelocateWithMixedPixels()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.WHITE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        p1.setColor(Color.BLUE);
+        Pixel p2 = sim.getPixel(3, 3);
+        p2.setColor(Color.ORANGE);
+        Pixel p3 = sim.getPixel(3, 4);
+        p3.setColor(Color.ORANGE);
+        Pixel p4 = sim.getPixel(4, 3);
+        p4.setColor(Color.ORANGE);
+        boolean result = sim.maybeRelocate(p1);
+        Random.setNextInts(4, 4);
+        
+        assertThat(result).isFalse();
+    }
+    
+    /**
+     * tests the MaybeRelocate() method
+     */
+    public void testMaybeRelocateWithOrangeAndBlue()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.WHITE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        p1.setColor(Color.BLUE);
+        Pixel p2 = sim.getPixel(3, 3);
+        p2.setColor(Color.ORANGE);
+        Pixel p3 = sim.getPixel(3, 4);
+        p3.setColor(Color.ORANGE);
+        Pixel p4 = sim.getPixel(4, 3);
+        p4.setColor(Color.ORANGE);
+        Pixel p5 = sim.getPixel(4, 4);
+        p5.setColor(Color.BLUE);
+        boolean result = sim.maybeRelocate(p1);
+        Random.setNextInts(4, 4);
+        
+        assertThat(result).isFalse();
+    }
+    
+    /**
+     * tests the MaybeRelocate() method
+     */
+    public void testMaybeRelocateWithWhiteAndBlue()
+    {
+        for (Pixel p : sim.getPixels())
+        {
+            p.setColor(Color.WHITE);
+        }
+        Pixel p1 = sim.getPixel(1, 1);
+        p1.setColor(Color.BLUE);
+        Pixel p2 = sim.getPixel(3, 3);
+        p2.setColor(Color.ORANGE);
+        Pixel p3 = sim.getPixel(3, 4);
+        p3.setColor(Color.ORANGE);
+        Pixel p4 = sim.getPixel(4, 3);
+        p4.setColor(Color.ORANGE);
+        Pixel p5 = sim.getPixel(4, 4);
+        p5.setColor(Color.BLUE);
+        Pixel p6 = sim.getPixel(2, 2);
+        p6.setColor(Color.BLUE);
+        boolean result = sim.maybeRelocate(p1);
+        Random.setNextInts(2, 2);
+        
+        assertThat(result).isFalse();
+    }
+    
+    /**
+     * tests the testCycleAgents() method
+     */
+    public void testCycleAgents()
+    {
+        sim = new SchellingSimulation(5, 5);
+        for (Pixel pixel : sim.getPixels())
+        {
+            pixel.setColor(Color.WHITE);
+        }
+        sim.getPixel(0, 0).setColor(Color.ORANGE);
+        sim.getPixel(1, 0).setColor(Color.BLUE);
+        sim.getPixel(2, 0).setColor(Color.ORANGE);
+        sim.getPixel(0, 1).setColor(Color.BLUE);
+        sim.getPixel(1, 1).setColor(Color.BLUE);
+        sim.getPixel(2, 1).setColor(Color.BLUE);
+        sim.getPixel(2, 2).setColor(Color.ORANGE);
+        sim.getPixel(2, 3).setColor(Color.ORANGE);
+        sim.getPixel(3, 3).setColor(Color.ORANGE);
+        sim.getPixel(1, 4).setColor(Color.BLUE);
+        sim.getPixel(2, 4).setColor(Color.ORANGE);
+        sim.getPixel(3, 4).setColor(Color.BLUE);
+        sim.getPixel(4, 4).setColor(Color.ORANGE);
+        
+        Random.setNextInts(3, 2, 2, 1, 1, 0, 1, 4);
+        
+        assertThat(sim.cycleAgents()).isEqualTo(1);
+    }
+}
