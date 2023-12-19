@@ -1,0 +1,253 @@
+import student.media.*;
+import student.util.Random;
+import java.awt.Color;
+
+/**
+ *  This class creates a SchellingSimulation object that allows
+ *  for various scenarios to be tested.
+ *
+ *  @author Prakhar Pandey (prakhar28)
+ *  @version (2023.02.26)
+ */
+public class SchellingSimulation
+    extends Picture
+{
+    private double satisfactionThreshold;
+    private int redLine;
+
+    /**
+     * Initializes a newly created SchellingSimulation object.
+     * 
+     * @param width is the value of the width of the Image
+     * @param height is the value of the height of the Image.
+     */
+    public SchellingSimulation(int width, int height)
+    {
+        super(width, height);
+        satisfactionThreshold = 0.3;
+        redLine = 0;
+        /*# Do any work to initialize your class here. */
+    }
+
+    /**
+     * A getter method that returns 
+     * the satisfaction threshold (a double).
+     * 
+     * @return it returns the satisfaction threshold.
+     */
+    public double getSatisfactionThreshold()
+    {
+        return satisfactionThreshold;
+    }
+    
+    /**
+     * A setter method that takes a double parameter and 
+     * changes the satisfaction threshold to 
+     * the specified value.
+     * 
+     * @param adjustment sets the satisfactionThreshold to the 
+     * value of adjustment.
+     */
+    public void setSatisfactionThreshold(double adjustment)
+    {
+        satisfactionThreshold = adjustment;
+    }
+    
+    /**
+     * A getter method that returns the redline value (an int).
+     * 
+     * @return returns the redLine value. 
+     */
+    public int getRedLine()
+    {
+        return redLine;
+    }
+    
+    /**
+     * A setter method that takes an integer parameter 
+     * and changes the redline to the specified value.
+     * 
+     * @param adjustRedLine sets the redLine value to the 
+     * value of adjustRedLine.
+     */
+    public void setRedLine(int adjustRedLine)
+    {
+        redLine = adjustRedLine;
+    }
+    
+    /**
+     * Paints the image with a randomized collection of blue 
+     * and orange pixels.
+     * 
+     * @param blue is the probability of pixels being colored
+     * blue.
+     * @param orange is the probability of pixels being colored
+     * orange.
+     */
+    public void populate(double blue, double orange)
+    {
+        blue = blue * 10;
+        orange = orange * 10;
+        Random generator = Random.generator();
+        
+        for (Pixel pixel : getPixels())
+        {
+            int number = generator.nextInt(10);
+            if (pixel.getY() >= redLine)
+            {
+                if (number < blue)
+                {
+                    pixel.setColor(Color.BLUE);
+                }
+                else if (number < blue + orange)
+                {
+                    pixel.setColor(Color.ORANGE);
+                }
+                else
+                {
+                    pixel.setColor(Color.WHITE);
+                }
+            }
+            else
+            {
+                if (number < blue)
+                {
+                    pixel.setColor(Color.BLUE);
+                }
+                else
+                {
+                    pixel.setColor(Color.WHITE);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Takes two Pixel objects and returns a boolean value 
+     * indicating whether the two pixels have the same color.
+     * 
+     * @param p1 is the first pixel of the image 
+     * @param p2 is the second pixel of the image
+     * 
+     * @return it returns true if both pixels are colors.
+     */
+    public boolean areSameColor(Pixel p1, Pixel p2)
+    {
+        return p1.getColor().equals(p2.getColor());
+    }
+    
+    /** 
+     * Identifies an empty location by checking whether the 
+     * color of the pixel is white.
+     * 
+     * @return returns true if a pixel is empty. 
+     * 
+     * @param value1 is a pixel of the image. 
+     */
+    public boolean isEmpty(Pixel value1)
+    {
+        return value1.getColor().equals(Color.WHITE); 
+    }
+    
+    /**
+     * Evalutes whether an agent will be satisfied at a given
+     * pixel location.
+     * 
+     * @return returns true if the pixel is satisfied in its 
+     * current location.
+     * 
+     * @param value1 is a pixel of the image. 
+     * @param value2 is the color of the pixel. 
+     */
+    public boolean isSatisfied(Pixel value1, Color value2)
+    {
+        int similarNeighbors = 0;
+        int totalNeighbors = 0;
+        for (Pixel neighbor : value1.getNeighborPixels())
+        {
+            totalNeighbors++;
+            if (neighbor.getColor().equals(value2))
+            {
+                similarNeighbors++;
+            }
+            if (neighbor.getColor().equals(Color.WHITE))
+            {
+                totalNeighbors--;
+            }
+        }
+        
+        if (totalNeighbors == 0)
+        {
+            return true;
+        }
+            
+        return (double)similarNeighbors / 
+            totalNeighbors > satisfactionThreshold;
+    }
+    
+    /**
+     * Checks whether an agent is satisfied or not. If not 
+     * satisfied then this causes the method to relocate the 
+     * agent to a satisfactory location.
+     * 
+     * @return returns true if a pixel is unsatisfied and needs
+     * to be relocated. 
+     * 
+     * @param value1 is a pixel of the image. 
+     */
+    public boolean maybeRelocate(Pixel value1)
+    {
+        Random generator = Random.generator();
+        int newX = generator.nextInt(this.getWidth());
+        int newY; 
+        
+        if (value1.getColor().equals(Color.ORANGE))
+        {
+            newY = redLine + generator.nextInt(this.getHeight() - redLine);
+        }
+        else 
+        {
+            newY = generator.nextInt(this.getHeight());
+        }
+        
+        Pixel p = this.getPixel(newX, newY);
+        Color initialColor = value1.getColor();
+        value1.setColor(Color.WHITE);
+        
+        boolean isSatisfiedNewLocation = isSatisfied(p, initialColor);
+        
+        if (this.isEmpty(p) && isSatisfiedNewLocation)
+        {
+            p.setColor(initialColor);
+            return true;
+        }
+        else
+        {
+            value1.setColor(initialColor);
+            return false;
+        }
+    }
+    
+    /**
+     * Checks whether every agent in the simulation is 
+     * satisfied or not. If an agent is unsatisfied it is 
+     * relocated to a satisfactory location as described under
+     * the maybeRelocate() method.
+     * 
+     * @return this returns an integer representing the number
+     * of pixels that were relocated.
+     */
+    public int cycleAgents()
+    {
+        int numberOfCycles = 0;
+        for (Pixel pixel : getPixels())
+        {
+            if (!isEmpty(pixel) && !isSatisfied(pixel, pixel.getColor())
+                && maybeRelocate(pixel))
+            {
+                numberOfCycles++;
+            }
+        }
+        return numberOfCycles;
+    }
+}
